@@ -25,7 +25,7 @@ def calendar_events(calendar_summary):
     if not cal_id:
         return
     items = service.events().list(calendarId=cal_id['id']).execute().get('items')
-    need_items = ['id','updated','summary','etag']
+    need_items = ['id','updated','summary','etag','start','created']
     coll_items = []
     for item in items:
         kv_items = {}
@@ -35,10 +35,18 @@ def calendar_events(calendar_summary):
     return coll_items
 
 def moveTo(calendar_from, entry_etag, calendar_to):
-    calendar_from_id = calendars_coll.get(calendar_from)
-    calendar_to_id = calendars_coll.get(calendar_to)
-
+    calendar_from_id = get_calendar(calendar_from).get('id')
+    calendar_to_id = get_calendar(calendar_to).get('id')
     service.events().move(
                     calendarId=calendar_from_id,
                     eventId=entry_etag,
                     destination=calendar_to_id).execute()
+    return True
+
+events = calendar_events('ToDo')
+for event in events:
+    print(''.join([f"{k}: {event.get(k)}" + '\n' for k in event]))
+    inputx = input("move to archive; type m\n> ")
+    if inputx == 'm':
+        moveTo('ToDo',event.get('id'),'Archive')
+    print("========")
