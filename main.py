@@ -38,10 +38,12 @@ def calendar_events(calendar_summary):
             if need_item == 'start':
                 start_output = item.get(need_item)
                 start_output.pop('timeZone',None)
-                dates = ['dateTime','date']
-                for date in dates:
-                    if datex := start_output.get(date):
-                        kv_items.update({need_item: datex})
+                #dates = ['dateTime','date']
+                #for date in dates:
+                #    if datex := start_output.get(date):
+                #        kv_items.update({need_item: datex})
+                datex = list(start_output.values())[0]
+                kv_items.update({need_item: datex })
             else:
                 kv_items.update({need_item:item.get(need_item)})
         coll_items.append(kv_items)
