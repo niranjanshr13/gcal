@@ -8,13 +8,13 @@ from termcolor import colored
 #from google.auth.transport.requests import Request
 
 
-def cred_read(filename):
+def service_gen(filename):
     with open(filename, 'rb') as token:
         cred = pickle.load(token)
-    return cred
+    service = build('calendar','v3',credentials=cred)
+    return service
 
-cred = cred_read('./token.pickle')
-service = build('calendar','v3',credentials=cred)
+service = service_gen(filename='./token.pickle')
 calendars = service.calendarList().list().execute().get('items')
 
 def get_calendar(calendar_summary=False):
