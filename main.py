@@ -30,7 +30,7 @@ def calendar_events(calendar_summary):
     if not cal_id:
         return
     items = service.events().list(calendarId=cal_id['id']).execute().get('items')
-    need_items = ['id','updated','summary','start','created','description']
+    need_items = ['id','summary','start','description']
     coll_items = []
     for item in items:
         kv_items = {}
@@ -66,7 +66,6 @@ def deleteTo(calendar_from, entry_id):
 
 events = calendar_events('ToDo')
 for num, event in enumerate(events):
-    #print(f"total: {num}/{len(events)}")
     event['total'] = f"{num}/{len(events)}"
     print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
     inputx = input("(a)rchive (d)elete \n>")
