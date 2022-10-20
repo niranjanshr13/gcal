@@ -1,15 +1,19 @@
-import pickle, datetime
-from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
-from google.auth.transport.requests import Request
+import pickle
 from termcolor import colored
 
-cred_pickle = './token.pickle'
+#import datetime
+#from google_auth_oauthlib.flow import Flow, InstalledAppFlow
+#from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+#from google.auth.transport.requests import Request
 
-with open(cred_pickle, 'rb') as token:
-    cred = pickle.load(token)
 
+def cred_read(filename):
+    with open(filename, 'rb') as token:
+        cred = pickle.load(token)
+    return cred
+
+cred = cred_read('./token.pickle')
 service = build('calendar','v3',credentials=cred)
 calendars = service.calendarList().list().execute().get('items')
 
