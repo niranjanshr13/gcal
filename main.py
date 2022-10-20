@@ -65,9 +65,11 @@ def deleteTo(calendar_from, entry_id):
 
 
 events = calendar_events('ToDo')
-for event in events:
+for num, event in enumerate(events):
+    print(f"total: {num}/{len(events)}")
     print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
     inputx = input("(a)rchive (d)elete \n>")
+    
     if inputx == 'a':
         moveTo('ToDo',event.get('id'),'Archive')
     if inputx == 'd':
