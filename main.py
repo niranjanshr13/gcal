@@ -68,11 +68,9 @@ events = calendar_events('ToDo')
 for num, event in enumerate(events):
     event['total'] = f"{num}/{len(events)}"
 
-    printing_event_info = ''
-
     for k in event:
         if event.get(k):
-            printing_event_info += f"{colored(k,'red')}: {event.get(k)}" + "\n"
+            print(f"{colored(k,'red')}: {event.get(k)}")
 
     inputx = input("(a)rchive (d)elete \n>")
     
