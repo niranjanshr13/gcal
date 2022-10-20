@@ -3,6 +3,7 @@ from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google.auth.transport.requests import Request
+from termcolor import colored
 
 cred_pickle = './token.pickle'
 
@@ -25,12 +26,20 @@ def calendar_events(calendar_summary):
     if not cal_id:
         return
     items = service.events().list(calendarId=cal_id['id']).execute().get('items')
-    need_items = ['id','updated','summary','etag','start','created']
+    need_items = ['id','updated','summary','etag','start','created','description']
     coll_items = []
     for item in items:
         kv_items = {}
         for need_item in need_items:
-            kv_items.update({need_item:item.get(need_item)})
+            if need_item == 'start':
+                start_output = item.get(need_item)
+                start_output.pop('timeZone',None)
+                if start_output.get('dateTime'):
+                    kv_items.update({need_item:start_output.get('dateTime')})
+                if start_output.get('date'):
+                    kv_items.update({need_item:start_output.get('date')})
+            else:
+                kv_items.update({need_item:item.get(need_item)})
         coll_items.append(kv_items)
     return coll_items
 
@@ -45,7 +54,7 @@ def moveTo(calendar_from, entry_etag, calendar_to):
 
 events = calendar_events('ToDo')
 for event in events:
-    print(''.join([f"{k}: {event.get(k)}" + '\n' for k in event]))
+    print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
     inputx = input("move to archive; type m\n> ")
     if inputx == 'm':
         moveTo('ToDo',event.get('id'),'Archive')
