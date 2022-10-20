@@ -67,7 +67,13 @@ def deleteTo(calendar_from, entry_id):
 events = calendar_events('ToDo')
 for num, event in enumerate(events):
     event['total'] = f"{num}/{len(events)}"
-    print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
+
+    printing_event_info = ''
+
+    for k in event:
+        if event.get(k):
+            printing_event_info += f"{colored(k,'red')}: {event.get(k)}" + "\n"
+
     inputx = input("(a)rchive (d)elete \n>")
     
     if inputx == 'a':
