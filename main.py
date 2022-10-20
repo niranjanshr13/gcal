@@ -30,7 +30,7 @@ def calendar_events(calendar_summary):
     if not cal_id:
         return
     items = service.events().list(calendarId=cal_id['id']).execute().get('items')
-    need_items = ['id','updated','summary','etag','start','created','description']
+    need_items = ['id','updated','summary','start','created','description']
     coll_items = []
     for item in items:
         kv_items = {}
@@ -47,19 +47,29 @@ def calendar_events(calendar_summary):
         coll_items.append(kv_items)
     return coll_items
 
-def moveTo(calendar_from, entry_etag, calendar_to):
+def moveTo(calendar_from, entry_id, calendar_to):
     calendar_from_id = get_calendar(calendar_from).get('id')
     calendar_to_id = get_calendar(calendar_to).get('id')
     service.events().move(
                     calendarId=calendar_from_id,
-                    eventId=entry_etag,
+                    eventId=entry_id,
                     destination=calendar_to_id).execute()
     return True
+
+def deleteTo(calendar_from, entry_id):
+    calendar_from_id = get_calendar(calendar_from).get('id')
+    service.events().delete(
+                    calendarId=calendar_from_id,
+                    eventId=entry_id).execute()
+    return True
+
 
 events = calendar_events('ToDo')
 for event in events:
     print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
-    inputx = input("move to archive; type m\n> ")
-    if inputx == 'm':
+    inputx = input("(a)rchive (d)elete \n>")
+    if inputx == 'a':
         moveTo('ToDo',event.get('id'),'Archive')
+    if inputx == 'd':
+        deleteTo('ToDo',event.get('id'))
     print("========")
