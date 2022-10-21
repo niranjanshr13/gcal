@@ -1,5 +1,7 @@
 from googleapiclient.discovery import build
 import pickle
+from datetime import datetime
+
 from termcolor import colored
 
 #import datetime
@@ -29,21 +31,19 @@ def calendar_events(calendar_summary):
     cal_id = get_calendar(calendar_summary)
     if not cal_id:
         return
-    items = service.events().list(calendarId=cal_id['id']).execute().get('items')
-    need_items = ['id','summary','start','description']
+    items = service.events().list(calendarId=cal_id.get('id')).execute().get('items')
+    need_items = ['id','start','summary','description','location']
     coll_items = []
     for item in items:
         kv_items = {}
         for need_item in need_items:
+            if not item.get(need_item, None):
+                continue
             if need_item == 'start':
-                start_output = item.get(need_item)
-                start_output.pop('timeZone',None)
-                #dates = ['dateTime','date']
-                #for date in dates:
-                #    if datex := start_output.get(date):
-                #        kv_items.update({need_item: datex})
-                datex = list(start_output.values())[0]
-                kv_items.update({need_item: datex })
+                if start_output := item.get(need_item):
+                    start_output.pop('timeZone', None)
+                    datex = list(start_output.values())[0]
+                    kv_items.update({need_item: datex })
             else:
                 kv_items.update({need_item:item.get(need_item)})
         coll_items.append(kv_items)
@@ -65,19 +65,42 @@ def deleteTo(calendar_from, entry_id):
                     eventId=entry_id).execute()
     return True
 
+def ToDo_to_Archive(ToDo, Archive):
+    # func to todo calendar to archive calendar
+    events = calendar_events(ToDo)
+    for num, event in enumerate(events):
+        event['total'] = f"{num+1}/{len(events)}"
+        print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
+        inputx = input("(a)rchive (d)elete \n> ")
 
-events = calendar_events('ToDo')
-for num, event in enumerate(events):
-    event['total'] = f"{num+1}/{len(events)}"
+        if inputx == 'a':
+            moveTo(ToDo,event.get('id'),Archive)
+        if inputx == 'd':
+            deleteTo(ToDo,event.get('id'))
+        print("========")
 
-    for k in event:
-        if event.get(k):
-            print(f"{colored(k,'red')}: {event.get(k)}")
+#ToDo_to_Archive(ToDo='ToDo', Archive='Archive')
 
-    inputx = input("(a)rchive (d)elete \n> ")
-    
-    if inputx == 'a':
-        moveTo('ToDo',event.get('id'),'Archive')
-    if inputx == 'd':
-        deleteTo('ToDo',event.get('id'))
-    print("========")
+def conversion_date_to_standard(date):
+    # if date == "2019-11-011:20am"
+    # use this format = '%Y-%m-%d%I:%M%p'
+    # btw I am tayloring to my needs not your's so fork this.
+    # needs output 2015-05-28T09:00:00-07:00
+    # strftime('%Y-%m-%d %H:%M:%S')
+    datex = datetime.fromtimestamp(int(date)).isoformat() + '-00:00'
+    return datex
+
+def import_from_somewhere(calendar_to, summary, date, description):
+    calendar_id = get_calendar(calendar_to)
+    # most likely I might prefer to have a event in specific one singular moment than a range.
+    event = {
+        'summary': summary,
+        'description': description,
+        'start':{'dateTime': conversion_date_to_standard(date),
+                'timeZone': 'America/New_York'},
+        'end':{'dateTime': conversion_date_to_standard(date),
+            'timeZone': 'America/New_York'
+        }
+    }
+    service.events().insert(calendarId=calendar_id, body=event).execute()
+    return True
