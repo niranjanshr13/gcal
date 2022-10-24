@@ -1,14 +1,7 @@
 from googleapiclient.discovery import build
-import pickle
 from datetime import datetime
-
 from termcolor import colored
-
-#import datetime
-#from google_auth_oauthlib.flow import Flow, InstalledAppFlow
-#from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
-#from google.auth.transport.requests import Request
-
+import pickle, argparse
 
 def service_gen(filename):
     with open(filename, 'rb') as token:
@@ -28,10 +21,10 @@ def get_calendar(calendar_summary=False):
 
 
 def calendar_events(calendar_summary):
-    cal_id = get_calendar(calendar_summary)
+    cal_id = get_calendar(calendar_summary).get('id')
     if not cal_id:
         return
-    items = service.events().list(calendarId=cal_id.get('id')).execute().get('items')
+    items = service.events().list(calendarId=cal_id).execute().get('items')
     need_items = ['id','start','summary','description','location']
     coll_items = []
     for item in items:
@@ -79,7 +72,7 @@ def ToDo_to_Archive(ToDo, Archive):
             deleteTo(ToDo,event.get('id'))
         print("========")
 
-#ToDo_to_Archive(ToDo='ToDo', Archive='Archive')
+ToDo_to_Archive(ToDo='ToDo', Archive='Archive')
 
 def conversion_date_to_standard(date):
     # if date == "2019-11-011:20am"
@@ -87,20 +80,34 @@ def conversion_date_to_standard(date):
     # btw I am tayloring to my needs not your's so fork this.
     # needs output 2015-05-28T09:00:00-07:00
     # strftime('%Y-%m-%d %H:%M:%S')
-    datex = datetime.fromtimestamp(int(date)).isoformat() + '-00:00'
-    return datex
+    date = datetime.fromtimestamp(int(date)).isoformat() + '-04:00'
+    return date
 
-def import_from_somewhere(calendar_to, summary, date, description):
-    calendar_id = get_calendar(calendar_to)
-    # most likely I might prefer to have a event in specific one singular moment than a range.
+def import_from_somewhere(calendar_to, summary, dateTime, description):
+    calendar_id = get_calendar(calendar_to).get('id')
+    dateTime = conversion_date_to_standard(dateTime)
     event = {
         'summary': summary,
         'description': description,
-        'start':{'dateTime': conversion_date_to_standard(date),
-                'timeZone': 'America/New_York'},
-        'end':{'dateTime': conversion_date_to_standard(date),
-            'timeZone': 'America/New_York'
-        }
+        'start':{'dateTime': dateTime,'timeZone': 'America/New_York'},
+        'end':{'dateTime': dateTime,'timeZone': 'America/New_York'}
     }
     service.events().insert(calendarId=calendar_id, body=event).execute()
     return True
+
+def present_time():
+    unix = int(datetime.timestamp(datetime.now()))
+    return unix 
+
+def countdown(calendar_summary):
+    events = calendar_events(calendar_summary)
+    for event in events:
+        y,m,d  = event.get('start').split('-')
+        moment = int(datetime(int(y),int(m),int(d),0,0).timestamp())
+        now = present_time()
+        remaining_days = f"{round((moment - now) / (60 * 60 * 24),3)} days"
+        event.update({'remaining': remaining_days})
+        print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
+        print("===")
+
+#countdown('Return')
