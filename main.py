@@ -42,7 +42,7 @@ def calendar_events(calendar_summary):
         coll_items.append(kv_items)
     return coll_items
 
-def moveTo(calendar_from, entry_id, calendar_to):
+def event_move(calendar_from, entry_id, calendar_to):
     calendar_from_id = get_calendar(calendar_from).get('id')
     calendar_to_id = get_calendar(calendar_to).get('id')
     service.events().move(
@@ -51,28 +51,33 @@ def moveTo(calendar_from, entry_id, calendar_to):
                     destination=calendar_to_id).execute()
     return True
 
-def deleteTo(calendar_from, entry_id):
+def event_delete(calendar_from, entry_id):
     calendar_from_id = get_calendar(calendar_from).get('id')
     service.events().delete(
                     calendarId=calendar_from_id,
                     eventId=entry_id).execute()
     return True
 
-def ToDo_to_Archive(ToDo, Archive):
+def event_move_exec(calendar_from, calendar_to):
     # func to todo calendar to archive calendar
-    events = calendar_events(ToDo)
+    events = calendar_events(calendar_from)
+    if not events:
+        return
     for num, event in enumerate(events):
-        event['total'] = f"{num+1}/{len(events)}"
+        id = event.get('id')
+        if not id:
+            return
+        event['total'] = f"{num+1}/{len(events)}" # it is done to create a automate loop
         print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
-        inputx = input("(a)rchive (d)elete \n> ")
+        input_key = input("(a)rchive (d)elete \n> ")
 
-        if inputx == 'a':
-            moveTo(ToDo,event.get('id'),Archive)
-        if inputx == 'd':
-            deleteTo(ToDo,event.get('id'))
+        if input_key == 'a':
+            event_move(calendar_from,id,calendar_to)
+        if input_key == 'd':
+            event_delete(calendar_from,id)
         print("========")
 
-ToDo_to_Archive(ToDo='ToDo', Archive='Archive')
+#event_move_exec(calendar_from='ToDo', calendar_to='Archive')
 
 def conversion_date_to_standard(date):
     # if date == "2019-11-011:20am"
@@ -101,6 +106,8 @@ def present_time():
 
 def countdown(calendar_summary):
     events = calendar_events(calendar_summary)
+    if not events:
+        return
     for event in events:
         y,m,d  = event.get('start').split('-')
         moment = int(datetime(int(y),int(m),int(d),0,0).timestamp())
@@ -110,4 +117,20 @@ def countdown(calendar_summary):
         print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
         print("===")
 
-#countdown('Return')
+
+parser = argparse.ArgumentParser(description='Description of your program')
+parser.add_argument('-c','--countdown', help='Countdown Func.', required=False)
+
+# event_move_exec
+parser.add_argument('-mf','--move_from', help='event_move_exec from', required=False)
+parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
+
+args = vars(parser.parse_args())
+
+if value := args.get('countdown'):
+    countdown(value)
+
+if move_from := args.get('move_from'):
+    if move_to := args.get('move_to'):
+        # example: -mf 'calendar from name' and -mt 'calendar to name'
+        event_move_exec(calendar_from=move_from, calendar_to=move_to)
