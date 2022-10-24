@@ -77,8 +77,6 @@ def event_move_exec(calendar_from, calendar_to):
             event_delete(calendar_from,id)
         print("========")
 
-#event_move_exec(calendar_from='ToDo', calendar_to='Archive')
-
 def conversion_date_to_standard(date):
     # if date == "2019-11-011:20am"
     # use this format = '%Y-%m-%d%I:%M%p'
@@ -88,8 +86,10 @@ def conversion_date_to_standard(date):
     date = datetime.fromtimestamp(int(date)).isoformat() + '-04:00'
     return date
 
-def import_from_somewhere(calendar_to, summary, dateTime, description):
+def calendar_import(calendar_to, summary, dateTime, description):
     calendar_id = get_calendar(calendar_to).get('id')
+    if not calendar_id:
+        return
     dateTime = conversion_date_to_standard(dateTime)
     event = {
         'summary': summary,
@@ -118,7 +118,7 @@ def countdown(calendar_summary):
         print("===")
 
 
-parser = argparse.ArgumentParser(description='Description of your program')
+parser = argparse.ArgumentParser(description='calendar quick navigation')
 parser.add_argument('-c','--countdown', help='Countdown Func.', required=False)
 
 # event_move_exec
@@ -132,5 +132,5 @@ if value := args.get('countdown'):
 
 if move_from := args.get('move_from'):
     if move_to := args.get('move_to'):
-        # example: -mf 'calendar from name' and -mt 'calendar to name'
+        # example: ./main.py -mf 'calendar from name' and -mt 'calendar to name'
         event_move_exec(calendar_from=move_from, calendar_to=move_to)

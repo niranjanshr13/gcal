@@ -1,3 +1,5 @@
 - openssl / pub key enc on token
 - toml / json output when asked
 - make it api func for remote access
+- need sort before print / outputing
+ - RTMF / google / diby
