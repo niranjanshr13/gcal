@@ -1,11 +1,14 @@
-from googleapiclient.discovery import build
 from datetime import datetime
-from termcolor import colored
-import pickle, argparse
+from googleapiclient.discovery import build
 from operator import itemgetter
+from termcolor import colored
+import pickle, argparse, os
 
 
 def service_gen(filename):
+# a helper func to start the service a session.
+    if not os.path.exists(filename):
+        return
     with open(filename, 'rb') as token:
         cred = pickle.load(token)
     service = build('calendar','v3',credentials=cred)
@@ -13,6 +16,8 @@ def service_gen(filename):
 
 
 def get_calendar(calendar_summary=False):
+# a helper func to get specfic calendar information.
+# a global calendar variable should not be touched.
     if not calendar_summary:
         return
     for calendar in calendars:
@@ -21,6 +26,7 @@ def get_calendar(calendar_summary=False):
 
 
 def calendar_events(calendar_summary):
+# a script to get a calendar event by passing a calendar name (calendar_summary)
     cal_id = get_calendar(calendar_summary).get('id')
     if not cal_id:
         return
@@ -44,6 +50,11 @@ def calendar_events(calendar_summary):
     return coll_items
 
 def event_move(calendar_from, entry_id, calendar_to):
+# a script to move event from one calendar to another calendar.
+# calendar_from: a calendar name; ex: Archive/ToDo
+# entry_id: a entry event id
+# calendar_to: same as calendar_from but for destination name
+# extras: calendar_from|calendar_to needs a calendar name, not calendar id.
     calendar_from_id = get_calendar(calendar_from).get('id')
     calendar_to_id = get_calendar(calendar_to).get('id')
     service.events().move(
@@ -53,6 +64,7 @@ def event_move(calendar_from, entry_id, calendar_to):
     return True
 
 def event_delete(calendar_from, entry_id):
+# a script to delete calendar event by passing calendar name and entry id.
     calendar_from_id = get_calendar(calendar_from).get('id')
     service.events().delete(
                     calendarId=calendar_from_id,
@@ -60,7 +72,7 @@ def event_delete(calendar_from, entry_id):
     return True
 
 def event_move_exec(calendar_from, calendar_to):
-    # func to todo calendar to archive calendar
+# interactive func to move entry from one event to another event, with (d)elete feat added.
     events = calendar_events(calendar_from)
     if not events:
         return
@@ -108,6 +120,9 @@ def present_time():
     return unix 
 
 def countdown(calendar_summary):
+# func to get a calendar event and also how many remaining to reach the deadline day.
+# ex: a task that needs to done in 10 days, but not now.
+# probably will not use, I might stick to my old ways to track that info in another apps.
     events = calendar_events(calendar_summary)
     if not events:
         return
@@ -121,6 +136,7 @@ def countdown(calendar_summary):
         print("===")
 
 
+# argparse 
 parser = argparse.ArgumentParser(description='calendar quick navigation')
 parser.add_argument('-c','--countdown', help='Countdown Func.', required=False)
 
@@ -133,7 +149,8 @@ parser.add_argument('-C','--config', help='config file', required=True)
 
 args = vars(parser.parse_args())
 
-service = service_gen(filename=f"{args.get('config')}")
+# args matching
+service = service_gen(filename=f"{args.get('config')}") # service var needs to at this place, because of the config args.
 calendars = service.calendarList().list().execute().get('items')
 
 if value := args.get('countdown'):
