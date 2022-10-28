@@ -66,18 +66,20 @@ def event_move_exec(calendar_from, calendar_to):
     events = calendar_events(calendar_from)
     if not events:
         return
-    for num, event in enumerate(events):
+    for num, event in enumerate(events, start=1):
         id = event.get('id')
         if not id:
             return
-        event['total'] = f"{num+1}/{len(events)}" # it is done to create a automate loop
+        event['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
         print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
-        input_key = input("(a)rchive (d)elete \n> ")
+        input_key = input("(a)rchive (d)elete (q)uit \n> ")
 
         if input_key == 'a':
             event_move(calendar_from,id,calendar_to)
         if input_key == 'd':
             event_delete(calendar_from,id)
+        if input_key == 'q':
+            exit()
         print("========")
 
 def conversion_date_to_standard(date):
