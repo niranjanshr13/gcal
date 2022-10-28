@@ -11,8 +11,6 @@ def service_gen(filename):
     service = build('calendar','v3',credentials=cred)
     return service
 
-service = service_gen(filename='./token.pickle')
-calendars = service.calendarList().list().execute().get('items')
 
 def get_calendar(calendar_summary=False):
     if not calendar_summary:
@@ -130,7 +128,13 @@ parser.add_argument('-c','--countdown', help='Countdown Func.', required=False)
 parser.add_argument('-mf','--move_from', help='event_move_exec from', required=False)
 parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
 
+# config
+parser.add_argument('-C','--config', help='config file', required=True)
+
 args = vars(parser.parse_args())
+
+service = service_gen(filename=f"{args.get('config')}")
+calendars = service.calendarList().list().execute().get('items')
 
 if value := args.get('countdown'):
     countdown(value)
