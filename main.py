@@ -2,6 +2,8 @@ from googleapiclient.discovery import build
 from datetime import datetime
 from termcolor import colored
 import pickle, argparse
+from operator import itemgetter
+
 
 def service_gen(filename):
     with open(filename, 'rb') as token:
@@ -40,6 +42,7 @@ def calendar_events(calendar_summary):
             else:
                 kv_items.update({need_item:item.get(need_item)})
         coll_items.append(kv_items)
+    coll_items = sorted(coll_items, key=itemgetter('start'), reverse=False)
     return coll_items
 
 def event_move(calendar_from, entry_id, calendar_to):
