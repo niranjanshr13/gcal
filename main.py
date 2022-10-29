@@ -137,21 +137,24 @@ def countdown(calendar_summary):
 
 
 # argparse 
-parser = argparse.ArgumentParser(description='calendar quick navigation')
-parser.add_argument('-c','--countdown', help='Countdown Func.', required=False)
+def arg_parse():
+    parser = argparse.ArgumentParser(description='calendar quick navigation')
+    # countdown
+    parser.add_argument('-c','--countdown', help='Countdown Func.', required=False)
+    # event_move_exec
+    parser.add_argument('-mf','--move_from', help='event_move_exec from', required=False)
+    parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
+    # config
+    parser.add_argument('-C','--config', help='config file', required=True)
+    args = vars(parser.parse_args())
+    return args
 
-# event_move_exec
-parser.add_argument('-mf','--move_from', help='event_move_exec from', required=False)
-parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
-
-# config
-parser.add_argument('-C','--config', help='config file', required=True)
-
-args = vars(parser.parse_args())
+args = arg_parse()
 
 # args matching
-service = service_gen(filename=f"{args.get('config')}") # service var needs to at this place, because of the config args.
-calendars = service.calendarList().list().execute().get('items')
+if config_file := args.get('config'):
+    service = service_gen(filename=config_file) # service var needs to at this place, because of the config args.
+    calendars = service.calendarList().list().execute().get('items')
 
 if value := args.get('countdown'):
     countdown(value)
