@@ -82,7 +82,7 @@ def event_move_exec(calendar_from, calendar_to):
             return
         event['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
         print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
-        input_key = input("(a)rchive (d)elete (q)uit \n> ")
+        input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive \n> ")
 
         if input_key == 'a':
             event_move(calendar_from,id,calendar_to)
@@ -90,6 +90,9 @@ def event_move_exec(calendar_from, calendar_to):
             event_delete(calendar_from,id)
         if input_key == 'q':
             exit()
+        if input_key == 'ea':
+            pass
+
         print("========")
 
 def conversion_date_to_standard(date):
@@ -102,6 +105,8 @@ def conversion_date_to_standard(date):
     return date
 
 def calendar_import(calendar_to, summary, dateTime, description):
+# a helper function to import event by a scripting way.
+# probably will not use.
     calendar_id = get_calendar(calendar_to).get('id')
     if not calendar_id:
         return
@@ -161,5 +166,5 @@ if value := args.get('countdown'):
 
 if move_from := args.get('move_from'):
     if move_to := args.get('move_to'):
-        # example: ./main.py -mf 'calendar from name' and -mt 'calendar to name'
+# example: ./main.py -mf 'calendar from name' and -mt 'calendar to name'
         event_move_exec(calendar_from=move_from, calendar_to=move_to)
