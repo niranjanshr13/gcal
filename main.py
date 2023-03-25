@@ -25,12 +25,12 @@ def get_calendar(calendar_summary=False):
             return calendar
 
 
-def calendar_events(calendar_summary):
+def calendar_events(calendar_summary, sort_):
 # a script to get a calendar event by passing a calendar name (calendar_summary)
     cal_id = get_calendar(calendar_summary).get('id')
     if not cal_id:
         return
-    items = service.events().list(calendarId=cal_id).execute().get('items')
+    items = service.events().list(calendarId=cal_id,  maxResults=2500).execute().get('items')
     need_items = ['id','start','summary','description','location']
     coll_items = []
     for item in items:
@@ -45,8 +45,10 @@ def calendar_events(calendar_summary):
                     kv_items.update({need_item: datex })
             else:
                 kv_items.update({need_item:item.get(need_item)})
-        coll_items.append(kv_items)
-    coll_items = sorted(coll_items, key=itemgetter('start'), reverse=False)
+        if kv_items.get('start'):
+            coll_items.append(kv_items)
+    print(coll_items)
+    coll_items = sorted(coll_items, key=itemgetter('start'), reverse=sort_)
     return coll_items
 
 def event_move(calendar_from, entry_id, calendar_to):
@@ -71,29 +73,31 @@ def event_delete(calendar_from, entry_id):
                     eventId=entry_id).execute()
     return True
 
-def event_move_exec(calendar_from, calendar_to):
+def event_move_exec(calendar_from, calendar_to, sort_):
 # interactive func to move entry from one event to another event, with (d)elete feat added.
-    events = calendar_events(calendar_from)
+    events = calendar_events(calendar_from, sort_)
     if not events:
-        return
+         return
     for num, event in enumerate(events, start=1):
-        id = event.get('id')
-        if not id:
-            return
-        event['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
-        print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
-        input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive \n> ")
-
-        if input_key == 'a':
-            event_move(calendar_from,id,calendar_to)
-        if input_key == 'd':
-            event_delete(calendar_from,id)
-        if input_key == 'q':
-            exit()
-        if input_key == 'ea':
+        try:
+            id = event.get('id')
+            if not id:
+                return
+            event['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
+            print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
+            input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive \n> ")
+            
+            if input_key == 'a':
+                 event_move(calendar_from,id,calendar_to)
+            if input_key == 'd':
+                event_delete(calendar_from,id)
+            if input_key == 'q':
+                exit()
+            if input_key == 'ea':
+                pass
+            print("========")
+        except:
             pass
-
-        print("========")
 
 def conversion_date_to_standard(date):
     # if date == "2019-11-011:20am"
@@ -151,6 +155,7 @@ def arg_parse():
     parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
     # config
     parser.add_argument('-C','--config', help='config file', required=True)
+    parser.add_argument('-s','--sort', help='sort (A/D)', required=True)
     args = vars(parser.parse_args())
     return args
 
@@ -161,10 +166,16 @@ if config_file := args.get('config'):
     service = service_gen(filename=config_file) # service var needs to at this place, because of the config args.
     calendars = service.calendarList().list().execute().get('items')
 
+if sort := args.get('sort'):
+    if sort == 'A':
+        sort_ = False
+    if sort == 'D':
+        sort_ = True
+
 if value := args.get('countdown'):
     countdown(value)
 
 if move_from := args.get('move_from'):
     if move_to := args.get('move_to'):
 # example: ./main.py -mf 'calendar from name' and -mt 'calendar to name'
-        event_move_exec(calendar_from=move_from, calendar_to=move_to)
+        event_move_exec(calendar_from=move_from, calendar_to=move_to, sort_=sort_)
