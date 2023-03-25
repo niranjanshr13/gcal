@@ -47,7 +47,6 @@ def calendar_events(calendar_summary, sort_):
                 kv_items.update({need_item:item.get(need_item)})
         if kv_items.get('start'):
             coll_items.append(kv_items)
-    print(coll_items)
     coll_items = sorted(coll_items, key=itemgetter('start'), reverse=sort_)
     return coll_items
 
@@ -84,6 +83,13 @@ def event_move_exec(calendar_from, calendar_to, sort_):
             if not id:
                 return
             event['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
+
+            date_format = "%Y-%m-%d"
+            given_date = datetime.strptime(event['start'], date_format)
+            current_date = datetime.now()
+            diff = given_date - current_date
+            #print("Days until 2023-08-18:", diff.days)
+            event['countdown'] = diff.days
             print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
             input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive \n> ")
             
