@@ -4,7 +4,6 @@ from operator import itemgetter
 from termcolor import colored
 import pickle, argparse, os
 
-
 def service_gen(filename):
 # a helper func to start the service a session.
     if not os.path.exists(filename):
@@ -14,7 +13,6 @@ def service_gen(filename):
     service = build('calendar','v3',credentials=cred)
     return service
 
-
 def get_calendar(calendar_summary=False):
 # a helper func to get specfic calendar information.
 # a global calendar variable should not be touched.
@@ -23,7 +21,6 @@ def get_calendar(calendar_summary=False):
     for calendar in calendars:
         if calendar.get('summary') == calendar_summary:
             return calendar
-
 
 def calendar_events(calendar_summary, sort_):
 # a script to get a calendar event by passing a calendar name (calendar_summary)
