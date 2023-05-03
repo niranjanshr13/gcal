@@ -1,8 +1,10 @@
+import pytz
 from datetime import datetime
 from googleapiclient.discovery import build
 from operator import itemgetter
 from termcolor import colored
 import pickle, argparse, os
+
 
 def service_gen(filename):
 # a helper func to start the service a session.
@@ -13,6 +15,7 @@ def service_gen(filename):
     service = build('calendar','v3',credentials=cred)
     return service
 
+
 def get_calendar(calendar_summary=False):
 # a helper func to get specfic calendar information.
 # a global calendar variable should not be touched.
@@ -21,6 +24,7 @@ def get_calendar(calendar_summary=False):
     for calendar in calendars:
         if calendar.get('summary') == calendar_summary:
             return calendar
+
 
 def calendar_events(calendar_summary, sort_):
 # a script to get a calendar event by passing a calendar name (calendar_summary)
@@ -47,7 +51,7 @@ def calendar_events(calendar_summary, sort_):
     coll_items = sorted(coll_items, key=itemgetter('start'), reverse=sort_)
     return coll_items
 
-def event_move(calendar_from, entry_id, calendar_to):
+def event_move(calendar_from, event, calendar_to):
 # a script to move event from one calendar to another calendar.
 # calendar_from: a calendar name; ex: Archive/ToDo
 # entry_id: a entry event id
@@ -57,50 +61,68 @@ def event_move(calendar_from, entry_id, calendar_to):
     calendar_to_id = get_calendar(calendar_to).get('id')
     service.events().move(
                     calendarId=calendar_from_id,
-                    eventId=entry_id,
+                    eventId=event.get('id'),
                     destination=calendar_to_id).execute()
     return True
 
-def event_delete(calendar_from, entry_id):
+
+def event_move_now(calendar_from, event):
+    calendar_from_id = get_calendar(calendar_from).get('id')
+    event['start'] = {  'dateTime': datetime.now().isoformat(),
+                        'timeZone': 'UTC'
+                        }
+    event['end'] = {  'dateTime': datetime.now().isoformat(),
+                        'timeZone': 'UTC'
+                        }
+    service.events().update(calendarId=calendar_from_id, eventId=event.get('id'), body=event).execute()
+
+def event_delete(calendar_from, event):
 # a script to delete calendar event by passing calendar name and entry id.
     calendar_from_id = get_calendar(calendar_from).get('id')
     service.events().delete(
                     calendarId=calendar_from_id,
-                    eventId=entry_id).execute()
+                    eventId=event.get('id')).execute()
     return True
+
+def countdown_Calculate(event):
+    date_format = "%Y-%m-%d"
+    given_date = datetime.strptime(event['start'].split('T')[0], date_format)
+    current_date = datetime.now()
+    diff = given_date - current_date
+    return diff.days
+
 
 def event_move_exec(calendar_from, calendar_to, sort_):
 # interactive func to move entry from one event to another event, with (d)elete feat added.
     events = calendar_events(calendar_from, sort_)
+    info = {}
     if not events:
          return
     for num, event in enumerate(events, start=1):
-        try:
-            id = event.get('id')
-            if not id:
+        if 1 == 1:
+            if not event.get('id'):
                 return
-            event['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
-
-            date_format = "%Y-%m-%d"
-            given_date = datetime.strptime(event['start'], date_format)
-            current_date = datetime.now()
-            diff = given_date - current_date
-            #print("Days until 2023-08-18:", diff.days)
-            event['countdown'] = diff.days
-            print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
-            input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive \n> ")
+            print(event)
+            info['id'] = event.get('id')
+            info['summary'] = event.get('summary')
+            info['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
+            info['countdown'] = countdown_Calculate(event)
+            
+            print(''.join([f"{colored(k, 'red')}: {info.get(k)}" + '\n' for k in info]))
+            input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive (n)ow \n> ")
+            
             
             if input_key == 'a':
                  event_move(calendar_from,id,calendar_to)
             if input_key == 'd':
                 event_delete(calendar_from,id)
             if input_key == 'q':
-                exit()
+                quit()
             if input_key == 'ea':
                 pass
+            if input_key == 'n':
+                event_move_now(calendar_from, event)
             print("========")
-        except:
-            pass
 
 def conversion_date_to_standard(date):
     # if date == "2019-11-011:20am"
