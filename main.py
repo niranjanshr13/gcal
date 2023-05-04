@@ -1,4 +1,3 @@
-import pytz
 from datetime import datetime
 from googleapiclient.discovery import build
 from operator import itemgetter
@@ -68,13 +67,11 @@ def event_move(calendar_from, event, calendar_to):
 
 def event_move_now(calendar_from, event):
     calendar_from_id = get_calendar(calendar_from).get('id')
-    event['start'] = {  'dateTime': datetime.now().isoformat(),
-                        'timeZone': 'UTC'
-                        }
-    event['end'] = {  'dateTime': datetime.now().isoformat(),
-                        'timeZone': 'UTC'
-                        }
+    now_date = { 'date': datetime.now().strftime("%Y-%m-%d") }
+    event['start'] = now_date
+    event['end'] = now_date
     service.events().update(calendarId=calendar_from_id, eventId=event.get('id'), body=event).execute()
+    return True
 
 def event_delete(calendar_from, event):
 # a script to delete calendar event by passing calendar name and entry id.
@@ -85,8 +82,7 @@ def event_delete(calendar_from, event):
     return True
 
 def countdown_Calculate(event):
-    date_format = "%Y-%m-%d"
-    given_date = datetime.strptime(event['start'].split('T')[0], date_format)
+    given_date = datetime.strptime(datetime.fromisoformat(event['start']).strftime("%Y-%m-%d"), "%Y-%m-%d")
     current_date = datetime.now()
     diff = given_date - current_date
     return diff.days
@@ -99,15 +95,15 @@ def event_move_exec(calendar_from, calendar_to, sort_):
     if not events:
          return
     for num, event in enumerate(events, start=1):
-        if 1 == 1:
+        try:
             if not event.get('id'):
                 return
-            print(event)
             info['id'] = event.get('id')
             info['summary'] = event.get('summary')
-            info['total'] = f"{num}/{len(events)}" # it is done to create a automate loop
+            info['description'] = event.get('description')
+            info['total'] = f"{num}/{len(events)}"
             info['countdown'] = countdown_Calculate(event)
-            
+
             print(''.join([f"{colored(k, 'red')}: {info.get(k)}" + '\n' for k in info]))
             input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive (n)ow \n> ")
             
@@ -123,6 +119,8 @@ def event_move_exec(calendar_from, calendar_to, sort_):
             if input_key == 'n':
                 event_move_now(calendar_from, event)
             print("========")
+        except:
+            pass
 
 def conversion_date_to_standard(date):
     # if date == "2019-11-011:20am"
@@ -140,41 +138,23 @@ def calendar_import(calendar_to, summary, dateTime, description):
     if not calendar_id:
         return
     dateTime = conversion_date_to_standard(dateTime)
+    dateTime_helper = {'dateTime': dateTime,'timeZone': 'America/New_York'}
     event = {
         'summary': summary,
         'description': description,
-        'start':{'dateTime': dateTime,'timeZone': 'America/New_York'},
-        'end':{'dateTime': dateTime,'timeZone': 'America/New_York'}
+        'start': dateTime_helper,
+        'end': dateTime_helper
     }
     service.events().insert(calendarId=calendar_id, body=event).execute()
     return True
 
 def present_time():
     unix = int(datetime.timestamp(datetime.now()))
-    return unix 
-
-def countdown(calendar_summary):
-# func to get a calendar event and also how many remaining to reach the deadline day.
-# ex: a task that needs to done in 10 days, but not now.
-# probably will not use, I might stick to my old ways to track that info in another apps.
-    events = calendar_events(calendar_summary)
-    if not events:
-        return
-    for event in events:
-        y,m,d  = event.get('start').split('-')
-        moment = int(datetime(int(y),int(m),int(d),0,0).timestamp())
-        now = present_time()
-        remaining_days = f"{round((moment - now) / (60 * 60 * 24),3)} days"
-        event.update({'remaining': remaining_days})
-        print(''.join([f"{colored(k, 'red')}: {event.get(k)}" + '\n' for k in event]))
-        print("===")
-
+    return unix
 
 # argparse 
 def arg_parse():
     parser = argparse.ArgumentParser(description='calendar quick navigation')
-    # countdown
-    parser.add_argument('-c','--countdown', help='Countdown Func.', required=False)
     # event_move_exec
     parser.add_argument('-mf','--move_from', help='event_move_exec from', required=False)
     parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
@@ -196,9 +176,6 @@ if sort := args.get('sort'):
         sort_ = False
     if sort == 'D':
         sort_ = True
-
-if value := args.get('countdown'):
-    countdown(value)
 
 if move_from := args.get('move_from'):
     if move_to := args.get('move_to'):
