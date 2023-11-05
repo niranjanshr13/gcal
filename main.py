@@ -1,9 +1,9 @@
+#!/usr/bin/python3
 from datetime import datetime
 from googleapiclient.discovery import build
 from operator import itemgetter
 from termcolor import colored
 import pickle, argparse, os
-
 
 def service_gen(filename):
 # a helper func to start the service a session.
@@ -87,6 +87,23 @@ def countdown_Calculate(event):
     diff = given_date - current_date
     return diff.days
 
+def count_calendar_event(calendar_from, sort_):
+    events = calendar_events(calendar_from, sort_)
+    counter_till_today = 0
+    counter_of_all = 0
+    for event in events:
+        start =  event.get('start')
+        start_clean = start.split('T')[0]
+        
+        datetime_obj = datetime.strptime(start_clean, "%Y-%m-%d")
+        current_date = datetime.now()
+        time_difference = current_date - datetime_obj
+
+        if time_difference.total_seconds() > 0:
+            counter_till_today += 1
+        counter_of_all += 1
+    print(f"{counter_till_today}|{counter_of_all}")
+
 
 def event_move_exec(calendar_from, calendar_to, sort_):
 # interactive func to move entry from one event to another event, with (d)elete feat added.
@@ -105,17 +122,18 @@ def event_move_exec(calendar_from, calendar_to, sort_):
             info['countdown'] = countdown_Calculate(event)
 
             print(''.join([f"{colored(k, 'red')}: {info.get(k)}" + '\n' for k in info]))
-            input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive (n)ow \n> ")
+            #input_key = input("(a)rchive (d)elete (q)uit (e)dit_and_(a)rchive (n)ow \n> ")
+            input_key = input("(a)rchive (q)uit (n)ow \n> ")
             
             
             if input_key == 'a':
-                 event_move(calendar_from,id,calendar_to)
-            if input_key == 'd':
-                event_delete(calendar_from,id)
+                 event_move(calendar_from,event,calendar_to)
+            #if input_key == 'd':
+            #    event_delete(calendar_from,id)
             if input_key == 'q':
                 quit()
-            if input_key == 'ea':
-                pass
+            #if input_key == 'ea':
+            #    pass
             if input_key == 'n':
                 event_move_now(calendar_from, event)
             print("========")
@@ -158,6 +176,8 @@ def arg_parse():
     # event_move_exec
     parser.add_argument('-mf','--move_from', help='event_move_exec from', required=False)
     parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
+    parser.add_argument('-c','--count', help='count calendar event', required=False)
+    parser.add_argument('-ca','--countall', help='count all calendar event', required=False)
     # config
     parser.add_argument('-C','--config', help='config file', required=True)
     parser.add_argument('-s','--sort', help='sort (A/D)', required=True)
@@ -179,5 +199,8 @@ if sort := args.get('sort'):
 
 if move_from := args.get('move_from'):
     if move_to := args.get('move_to'):
-# example: ./main.py -mf 'calendar from name' and -mt 'calendar to name'
+    # example: ./main.py -mf 'calendar from name' and -mt 'calendar to name'
         event_move_exec(calendar_from=move_from, calendar_to=move_to, sort_=sort_)
+
+if count := args.get('count'):
+    count_calendar_event(count, sort_)

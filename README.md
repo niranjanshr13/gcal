@@ -6,10 +6,20 @@ https://karenapp.io/articles/how-to-automate-google-calendar-with-python-using-t
 
 
 # examples:
+## archiving the event.
 ```
-python3 ~/bin/Calendar \
+python3 main.py \
   -C $CALENDAR_TOKEN_PICKLE \
   -mf ToDo \
   -mt Archive \
   -s D
+```
+
+
+## count event (OLD|TOTAL)
+```
+echo $(python3 main.py \
+        -C $CALENDAR_TOKEN_PICKLE \
+        -s A \
+        -c ToDo)
 ```
