@@ -146,13 +146,15 @@ def conversion_date_to_standard(date):
     # btw I am tayloring to my needs not your's so fork this.
     # needs output 2015-05-28T09:00:00-07:00
     # strftime('%Y-%m-%d %H:%M:%S')
-    date = datetime.fromtimestamp(int(date)).isoformat() + '-04:00'
+    date = f"{date}-04:00"
+    #date = datetime.fromtimestamp(int(date)).isoformat() + '-04:00'
     return date
 
 def calendar_import(calendar_to, summary, dateTime, description):
 # a helper function to import event by a scripting way.
 # probably will not use.
     calendar_id = get_calendar(calendar_to).get('id')
+    print(calendar_id)
     if not calendar_id:
         return
     dateTime = conversion_date_to_standard(dateTime)
@@ -178,6 +180,8 @@ def arg_parse():
     parser.add_argument('-mt','--move_to', help='event_move_exec to', required=False)
     parser.add_argument('-c','--count', help='count calendar event', required=False)
     parser.add_argument('-ca','--countall', help='count all calendar event', required=False)
+    # import
+    parser.add_argument('-i', '--importit', help='importing', required=False)
     # config
     parser.add_argument('-C','--config', help='config file', required=True)
     parser.add_argument('-s','--sort', help='sort (A/D)', required=True)
@@ -204,3 +208,15 @@ if move_from := args.get('move_from'):
 
 if count := args.get('count'):
     count_calendar_event(count, sort_)
+
+
+if importitme := args.get('importit'):
+    import yaml
+    yamls = yaml.safe_load_all(open(importitme,'r'))
+    for ya in list(yamls):
+        name = ya[0]["name"]
+        calendar_name = ya[0]["calendar"]
+        desc = ya[0]["desc"]
+        date = ya[0]["date"]
+        time = ya[0]["time"]
+        calendar_import(calendar_name,name, f"{date}T{time}", desc)
