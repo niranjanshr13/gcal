@@ -91,7 +91,10 @@ def count_calendar_event(calendar_from, sort_order):
     counter_till_today = 0
     counter_of_all = len(events)
     for event in events:
-        datetime_obj = datetime.strptime(event.get('start'), "%Y-%m-%d")
+        if 'T' in event.get('start'):
+            datetime_obj = datetime.strptime(event.get('start').split('T')[0], "%Y-%m-%d")
+        else:
+            datetime_obj = datetime.strptime(event.get('start'), "%Y-%m-%d")
         time_difference = datetime.now() - datetime_obj
         if time_difference.total_seconds() > 0:
             counter_till_today += 1
@@ -157,11 +160,21 @@ def arg_parse():
     parser.add_argument('-i', '--importit', help='Import events', required=False)
     parser.add_argument('-C', '--config', help='Config file', required=True)
     parser.add_argument('-s', '--sort', help='Sort order (A/D)', required=True)
+    parser.add_argument('-y', '--yaml_gen', help='yaml gen for importing', required=False)
     args = vars(parser.parse_args())
     return args
 
 if __name__ == "__main__":
     args = arg_parse()
+    if yaml_gen := args.get('yaml_gen'):
+        print("""
+        - name: summary
+          desc: description
+          calendar: Alarm
+          date: '2024-06-12'
+          time: '19:57:00'
+          """)
+        exit()
     if config_file := args.get('config'):
         service = service_gen(filename=config_file)
         calendars = service.calendarList().list().execute().get('items', [])
