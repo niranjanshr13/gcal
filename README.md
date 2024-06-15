@@ -15,11 +15,26 @@ python3 main.py \
   -s D
 ```
 
-
 ## count event (OLD|TOTAL)
 ```
-echo $(python3 main.py \
+python3 main.py \
         -C $CALENDAR_TOKEN_PICKLE \
         -s A \
-        -c ToDo)
+        -c ToDo
+```
+
+## importing from yaml file.
+```
+- name: summary
+  desc: description
+  calendar: Alarm
+  date: '2024-06-12'
+  time: '19:57:00'
+---
+- name: summary
+  desc: description
+  calendar: Alarm
+  date: '2024-06-12'
+  time: '19:57:00'
+
 ```
